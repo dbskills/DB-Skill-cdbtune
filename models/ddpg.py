@@ -31,10 +31,10 @@ class NoisyLinear(nn.Linear):
 
     def reset_parameters(self):
         if hasattr(self, 'sigma_weight'):  # Only init after all params added (otherwise super().__init__() fails)
-            init.uniform(self.weight, -math.sqrt(3 / self.in_features), math.sqrt(3 / self.in_features))
-            init.uniform(self.bias, -math.sqrt(3 / self.in_features), math.sqrt(3 / self.in_features))
-            init.constant(self.sigma_weight, self.sigma_init)
-            init.constant(self.sigma_bias, self.sigma_init)
+            init.uniform_(self.weight, -math.sqrt(3 / self.in_features), math.sqrt(3 / self.in_features))
+            init.uniform_(self.bias, -math.sqrt(3 / self.in_features), math.sqrt(3 / self.in_features))
+            init.constant_(self.sigma_weight, self.sigma_init)
+            init.constant_(self.sigma_bias, self.sigma_init)
 
     def forward(self, input):
         return F.linear(input, self.weight + self.sigma_weight * Variable(self.epsilon_weight), self.bias + self.sigma_bias * Variable(self.epsilon_bias))
@@ -338,11 +338,11 @@ class DDPG(object):
     def _sample_batch(self):
         batch, idx = self.replay_memory.sample(self.batch_size)
         # batch = self.replay_memory.sample(self.batch_size)
-        states = map(lambda x: x[0].tolist(), batch)
-        next_states = map(lambda x: x[3].tolist(), batch)
-        actions = map(lambda x: x[1].tolist(), batch)
-        rewards = map(lambda x: x[2], batch)
-        terminates = map(lambda x: x[4], batch)
+        states = [x[0].tolist() for x in batch]
+        next_states = [x[3].tolist() for x in batch]
+        actions = [x[1].tolist() for x in batch]
+        rewards = [x[2] for x in batch]
+        terminates = [x[4] for x in batch]
 
         return idx, states, next_states, actions, rewards, terminates
 
@@ -409,7 +409,7 @@ class DDPG(object):
         self._update_target(self.target_critic, self.critic, tau=self.tau)
         self._update_target(self.target_actor, self.actor, tau=self.tau)
 
-        return loss.data[0], policy_loss.data[0]
+        return loss.item(), policy_loss.item()
 
     def choose_action(self, x):
         """ Select Action according to the current state
@@ -501,6 +501,6 @@ class DDPG(object):
             action = self.totensor(action)
             _loss = self.actor_criterion(pred, action)
 
-        return _loss.data[0]
+        return _loss.item()
 
 
