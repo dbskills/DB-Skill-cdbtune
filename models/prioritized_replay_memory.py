@@ -18,7 +18,7 @@ class SumTree(object):
         self.num_entries = 0
 
     def _propagate(self, idx, change):
-        parent = (idx - 1) / 2
+        parent = (idx - 1) // 2
         self.tree[parent] += change
         if parent != 0:
             self._propagate(parent, change)
